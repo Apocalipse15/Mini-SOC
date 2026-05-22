@@ -1,5 +1,10 @@
 import uvicorn
+import logging
 
+logging.basicConfig(
+    level=logging.DEBUG,  # or INFO if you prefer less noise
+    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
+)
 
 def main():
     print("Hello from backend!")

@@ -70,5 +70,6 @@ class RedisManager:
         key = f"webauthn:auth:{challenge}"
         result = await self.client.delete(key)
         return result == 1
+    
 
 redis_manager = RedisManager()

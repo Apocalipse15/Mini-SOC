@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js"
+import { setUser } from "../stores/auth"
 
 export default function Login() {
   const [username, setUsername] = createSignal("")
@@ -110,6 +111,7 @@ export default function Login() {
         "http://localhost:8000/auth/authenticate/complete",
         {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: username(),
@@ -118,7 +120,9 @@ export default function Login() {
         }
       )
 
-      console.log("Login success:", await res2.json())
+      const loginResult = await res2.json()
+      console.log("Login success:", loginResult)
+      setUser(loginResult)
     } catch (err: any) {
       setLoginError(err.message)
     } finally {

@@ -7,6 +7,7 @@ export default function App(props: any) {
         <A href="/">Home</A>
         <A href="/about">About</A>
         <A href="/login">Login</A>
+        <A href="/me">Me</A>
       </nav>
 
       {props.children}

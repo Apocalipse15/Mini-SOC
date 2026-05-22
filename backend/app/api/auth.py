@@ -9,11 +9,12 @@ from app.core.encoding import b64url_encode
 from app.schemas.user import UserRead
 
 from app.core.dependencies import (
-    #current_user,
+    current_user,
     issue_session,
     #revoke_session,
     #session_token_from_cookie,
 )
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -67,3 +68,42 @@ async def authenticate_complete(
     await issue_session(response, user)
     return UserRead.model_validate(user)
 
+# Endpoints for session management
+
+@router.get("/me", status_code = 200)
+async def me(user: User = Depends(current_user)):
+    """
+    Return the user bound to the current session
+    """
+    logger.info("Received request for current user info: %s", user.username)
+    return UserRead.model_validate(user)
+
+"""
+
+@router.post("/logout", status_code = 204)
+async def logout(
+    response: Response,
+    token: str | None = Depends(session_token_from_cookie),
+) -> None:
+    await revoke_session(response, token)
+
+
+@router.post("/users/search", status_code = 200)
+async def search_users(
+    request: Request,
+    body: UserSearchRequest,
+    user: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session),
+) -> UserSearchResponse:
+       
+    users = await auth_service.search_users(
+        session,
+        body.query,
+        body.limit,
+        exclude_user_id = user.id,
+    )
+
+    return UserSearchResponse(
+        users = [UserRead.model_validate(u) for u in users]
+    ) 
+"""
