@@ -1,0 +1,62 @@
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db import get_session
+from app.schemas.auth import AuthenticationBeginRequest, RegistrationBeginRequest, RegistrationCompleteRequest
+from app.services.auth_service import auth_service
+import logging
+
+from app.core.encoding import b64url_encode
+from app.schemas.user import UserRead
+
+from app.core.dependencies import (
+    #current_user,
+    issue_session,
+    #revoke_session,
+    #session_token_from_cookie,
+)
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+@router.post("/register/begin")
+async def register_begin(
+    body: RegistrationBeginRequest,
+    session: AsyncSession = Depends(get_session),
+):
+    logger.info("Received registration begin request for username: %s", body.username)
+    print("REGISTER BEGIN USERNAME: %s\n\n", body.username)
+
+    aux = await auth_service.register_begin(
+        session,
+        body.username,
+        body.display_name
+    )
+    logger.info("Options generated for user %s: %s", body.username, aux)
+    return aux
+
+@router.post("/register/complete", status_code=201)
+async def register_complete(request: Request,
+    body: RegistrationCompleteRequest,
+    response: Response,
+    session: AsyncSession = Depends(get_session),):
+    print("COMPLETE USERNAME:\n\n", body.username)
+    user = await auth_service.complete_registration(session, body)
+    await issue_session(response, user)
+    return UserRead.model_validate(user)
+
+
+
+@router.post("/authenticate/begin")
+async def authenticate_begin(request: Request,
+    body: AuthenticationBeginRequest,
+    session: AsyncSession = Depends(get_session),):
+    logger.info("Received authentication begin request")
+    return await auth_service.begin_authentication(session, body)
+
+
+
+@router.post("/authenticate/complete")
+async def authenticate_complete():
+    return "empty"
