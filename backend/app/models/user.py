@@ -1,10 +1,9 @@
 import uuid
 from sqlalchemy import Boolean, String
 from sqlalchemy.dialects.postgresql import UUID, BYTEA
-from sqlalchemy.orm import Mapped, mapped_column, declarative_base
+from sqlalchemy.orm import Mapped, mapped_column, declarative_base, relationship
 
-
-Base = declarative_base()
+from app.models.base import Base
 
 
 class User(Base):
@@ -35,4 +34,10 @@ class User(Base):
     webauthn_user_handle: Mapped[bytes] = mapped_column(
         BYTEA,
         nullable=False,
+    )
+
+    credentials = relationship(
+        "Credential",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )

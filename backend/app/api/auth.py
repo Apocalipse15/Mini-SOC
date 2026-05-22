@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
-from app.schemas.auth import AuthenticationBeginRequest, RegistrationBeginRequest, RegistrationCompleteRequest
+from app.schemas.auth import AuthenticationBeginRequest, AuthenticationCompleteRequest, RegistrationBeginRequest, RegistrationCompleteRequest
 from app.services.auth_service import auth_service
 import logging
 
@@ -58,5 +58,12 @@ async def authenticate_begin(request: Request,
 
 
 @router.post("/authenticate/complete")
-async def authenticate_complete():
-    return "empty"
+async def authenticate_complete(
+    request: Request,
+    body: AuthenticationCompleteRequest,
+    response: Response,
+    session: AsyncSession = Depends(get_session),):
+    user = await auth_service.complete_authentication(session, body)
+    await issue_session(response, user)
+    return UserRead.model_validate(user)
+

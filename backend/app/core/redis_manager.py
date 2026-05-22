@@ -61,5 +61,14 @@ class RedisManager:
         if not data:
             return None
         return json.loads(data.decode("utf-8"))
+    
+    async def set_authentication_challenge(self, challenge: bytes, ttl: int = settings.WEBAUTHN_CHALLENGE_TTL_SECONDS):
+        key = f"webauthn:auth:{challenge}"
+        await self.client.setex(key, ttl, challenge)
+
+    async def take_authentication_challenge(self, challenge: str):
+        key = f"webauthn:auth:{challenge}"
+        result = await self.client.delete(key)
+        return result == 1
 
 redis_manager = RedisManager()

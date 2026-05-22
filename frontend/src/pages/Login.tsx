@@ -88,7 +88,7 @@ export default function Login() {
       })
 
       console.log("Login options response:", res)
-      /*
+      
       const options = await res.json()
 
       const publicKey = {
@@ -118,7 +118,7 @@ export default function Login() {
         }
       )
 
-      console.log("Login success:", await res2.json())*/
+      console.log("Login success:", await res2.json())
     } catch (err: any) {
       setLoginError(err.message)
     } finally {

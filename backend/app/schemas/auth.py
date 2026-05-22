@@ -53,3 +53,14 @@ class AuthenticationBeginRequest(BaseModel):
         min_length = settings.USERNAME_MIN_LENGTH,
         max_length = settings.USERNAME_MAX_LENGTH,
     )
+
+class AuthenticationCompleteRequest(BaseModel):
+    """
+    Request to complete passkey authentication
+    """
+    username: str | None = Field(
+        default = None,
+        min_length = settings.USERNAME_MIN_LENGTH,
+        max_length = settings.USERNAME_MAX_LENGTH,
+    )
+    credential: dict[str, Any]

@@ -103,6 +103,68 @@ class PasskeyManager:
             backup_eligible=bool(getattr(verification, "credential_backup_eligible", False)),
             backup_state=bool(getattr(verification, "credential_backed_up", False)),
         )
+    
+    def generate_authentication_options(self, user_handle: bytes, allowed_credentials: list[bytes]):
+        challenge = secrets.token_bytes(settings.WEBAUTHN_CHALLENGE_BYTES)
+
+        allow_credentials = []
+        if allowed_credentials:
+            allow_credentials = [
+                PublicKeyCredentialDescriptor(id = cred_id)
+                for cred_id in allowed_credentials
+            ]
+
+        options = generate_authentication_options(
+            rp_id = self.rp_id,
+            challenge = challenge,
+            user_verification = UserVerificationRequirement.REQUIRED,
+            allow_credentials = allow_credentials,
+        )
+
+        logger.debug("Generated authentication options for user handle %s", bytes_to_base64url(user_handle))
+
+        return RegistrationOptionsResponse(
+            options = options_to_json_dict(options),
+            challenge = challenge,
+        )
+    
+    def verify_authentication(self, credential: dict[str, any], expected_challenge: bytes, credential_public_key: bytes, credential_current_sign_count: int):
+        try:
+            verification = verify_authentication_response(
+                credential = credential,
+                expected_challenge = expected_challenge,
+                expected_rp_id = self.rp_id,
+                expected_origin = self.rp_origin,
+                credential_public_key = credential_public_key,
+                credential_current_sign_count = credential_current_sign_count,
+                require_user_verification = True,
+            )
+
+            new_sign_count = verification.new_sign_count
+
+            if (credential_current_sign_count != 0 and new_sign_count != 0
+                and new_sign_count <= credential_current_sign_count):
+                logger.error(
+                    "Signature counter did not increase: current=%s, new=%s. Possible cloned authenticator detected!",
+                    credential_current_sign_count,
+                    new_sign_count
+                )
+                raise ValueError(
+                    "Signature counter anomaly detected - potential cloned authenticator"
+                )
+
+            logger.info(
+                "Verified authentication with counter %s -> %s",
+                credential_current_sign_count,
+                new_sign_count
+            )
+
+
+        except Exception as e:
+            logger.error("WebAuthn authentication failed: %s", str(e))
+            raise ValueError("Authentication verification failed") from e
+
+        return verification
 
 
 passkey_manager = PasskeyManager()
